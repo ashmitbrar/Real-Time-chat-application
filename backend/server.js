@@ -1,17 +1,38 @@
 const express = require("express");
+const connectDB = require("./config/db");
 const dotenv = require("dotenv");
-const app = express()
-dotenv.config();
-app.get('/', (req,res) => {
-    res.send("API IS RUNNING")
-})
+const userRoutes = require("./routes/userRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const path = require("path");
 
-app.get('/api/chat', (req, res) => {
-    res.send (chats);
-});
-app.get("/api/chat/:id", (req, res) => {
-    const singleChat = chats.find((c) => c._id === req.params.id);
-    res.send(singleChat);
-});
-const PORT = process.env.PORT || 5000;
-app.listen(5000, console.log('Server started on Port &{PORT}'))
+dotenv.config();
+connectDB();
+const app = express();
+
+app.use(express.json()); // to accept json data
+
+// app.get("/", (req, res) => {
+//   res.send("API Running!");
+// });
+
+app.use("/api/user", userRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/message", messageRoutes);
+
+// --------------------------deployment------------------------------
+
+const __dirname1 = path.resolve();
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname1, "/frontend/build")));
+
+  app.get("*", (req, res) =>
+    res.sendFile(path.resolve(__dirname1, "frontend", "build", "index.html"))
+  );
+} else {
+  app.get("/", (req, res) => {
+    res.send("API is running..");
+  });
+}
